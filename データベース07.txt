@@ -1,0 +1,126 @@
+Chapter07 データの絞り込みと並べ替え
+
+7-1 重複の除去
+
+SELECT文でWHERE句を指定して特定の列だけ抽出すると、同じ値のレコードが複数抽出
+される場合がある。
+→DISTINCTキーワードを使用すると、重複する値を除いたレコードを
+    ↑                                              抽出することができる。
+  SELECT文に用意されているキーワード
+  ※INSERT、UPDATE、DELETE文との併用は不可！
+
+【確認】売上金額10万円を超える会社を知りたい。
+ [リスト7-1] DISTINCTキーワード：『無』                      抽出件数
+  SELECT          company FROM uriage WHERE charge >= 100000;←16件
+ [リスト7-2] DISTINCTキーワード：『有』
+  SELECT DISTINCT company FROM uriage WHERE charge >= 100000;← 5件
+
+
+7-2 データの並べ替え
+
+データは登録した順番に並んでいる。
+→明示的に並べ替えて抽出したい場合は、ORDER RY句を使用する。
+
+ [構文] WHERE句の後に記述する！
+  ORDER BY カラム名 [ASC] ←昇順（キーワード：省略可能）
+  ORDER BY カラム名 DESC  ←降順
+
+※ カラム名は複数指定（カンマで区切って、列挙）可能で、左記のカラムが優先される
+※その際、を順序を指定するキーワードの記述に注意が必要。
+          →順序を指定するキーワードは直前のカラム名にのみ有効！
+  [例] ORDER BY カラム名1,カラム名2 DESC
+                  ↑
+                指定しない場合、昇順になる！
+       ともに、降順並べ替えしたい場合は、下記する。
+       ORDER BY カラム名1 DESC, カラム名2 DESC
+
+【確認】
+ [リスト7-4] SELECT * FROM uriage ORDER BY charge ASC; ←売上金額の低い順番
+ [リスト7-5] SELECT * FROM uriage ORDER BY charge DESC;←売上金額の高い順番
+ [追加]      SELECT * FROM uriage ORDER BY company DESC, charBge ASC;
+             →会社名で降順に並べ替えるが、
+               同じ会社のレコードに対しては売上金額の低い順番で並べ替える。
+
+
+7-3 特定範囲のデータ抽出
+
+データを並べ替えて抽出する場合、すべてのレコードが必要ではない場合、範囲を
+指定して抽出することができる。
+→特定の範囲Tお抽出件巣をLIMITで指定する。
+
+ [構文] LIMIT 件数           ←先頭から指定した件数を抽出する
+        LIMIT オフセット,件数←オフセットで指定したレコードから開始して
+                 ↑            指定した件数を抽出する
+              レコードの場所
+              ※先頭のレコードは0から数える！
+
+  ※実用的には、並べ替えた結果に対して、特定の範囲を抽出するため、ORDER BY句と
+    組み合わせて使用（ORDER BY句の後に記述）する。
+
+【確認】売上金額の上位3件を取得
+ [リスト] SELECT * FROM uriage ORDER BY charge DESC LIMIT 3;
+                                               ↑
+                                               省略あるいはASCを指定すれば
+                                               下位3件を取得できる
+
+7-4 データの集約とグループ化
+
+SELECT文では、レコードをまとめてグループ化したり、集計したりすることができる。
+                                   ↑                   ↑
+                             ②GROUP BY句         ①集約関数
+
+①集約関数
+  対象のレコードをまとめて取り扱い、1つの結果として出力する関数
+ [例]
+  合計：SUM関数、平均：AVG関数、個数：COUNT関数
+  最大：MAX関数、最小：MIN関数 など[P.185 表7-1]
+
+※ 通常の関数と異なる点）
+   1 引数はカラム名を指定する。
+     →COUNT関数は例外で、*など（複数のカラム名）を指定することができる。
+   2 関数の特性上、WHERE句には記述できない！[後述参照]
+    [例]
+     〇 SELECT COUNT(*), SUM(charge) FROM uruage;
+                  ↑      ↑
+             結果は、ともに1つ！          →結果票に出力されるレコード数は同じ！
+
+     × SELECT company, SUM(charge) FROM uriage;
+                  ↑      ↑
+         すべてのレコード 1つの出力       →結果票に出力されるレコード数は異なる！
+
+②GROUP BY句：WHERE句の後、ORDER BY句の前に記述する
+  →特定の項目でグループ化する（まとめる）
+ [構文] GROUP BY カラム名リスト
+                       ↑
+                 カンマで区切って、列挙
+
+【確認】
+ [図7-18]     SELECT company,SUM(charge) FROM uriage GROUP BY company;
+ [リスト7-12]          ↓         ↓                        ↑
+              グループ化した項目に対して出力       company  列をグループ化
+                       ↑         ↑               salesdate列をグループ化
+                       ↑         ↑                        ↓
+ [リスト7-13] SELECT salesdate,SUM(charge) FROM uriage GROUP BY salesdate;
+
+★集約後のデータを絞り込むには？
+  →集約関数の結果を利用して、抽出するレコードを絞り込みたい場合は、条件を
+    記述する句に注意する！
+    ×WHERE 句：集約関数を実行する『前』の条件を記述する
+    〇HAVING句：集約関数を実行した『後』の条件を記述する
+
+ 【参考】SELECT文で指定可能な句の実行順序
+
+   1 FROM
+   2 WHERE  
+   3 GROUP BY
+   4 HAVING
+   5 SELECT
+   6 ORDER BY
+※つまり、上記順序に従い、集約関数を実行後に、条件関数を指定しなければならない。
+  WHERE句は、GROUP BY句の前に処理される関数なので、合わせて使うことはできない。
+  GROUP BY句で集約した情報を絞り込むためには、HAVING句を使用する必要がある。
+
+【確認】
+ [図7-22] SELECT company, SUM(charge) AS goukei FROM uriage
+                                       代替名
+          GROUP BY company
