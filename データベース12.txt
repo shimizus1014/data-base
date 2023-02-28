@@ -1,0 +1,82 @@
+Chapter12 ストアドルーチン
+
+12-1 ストアドルーチン
+
+一連のSQL文をデータベースに登録しておく仕組み
+→複数のSQL文を使用するごとに記述する手間を省くことができる。
+
+【ストアドルーチンの種類】2種類
+  ①ストアドプロシージャ  ：Excel VBAのSubプロシージャに相当
+    →戻り値なし
+    →利用するときは、CALL文を呼ぶ。
+
+  ②ストアドファンクション：Excel VBAのFunctionプロシージャに相当
+    →戻り値あり
+    →SQL文で使用できる関数と同じ取り扱いができる。
+
+【①ストアドプロシージャ】
+  vs トランザクション
+ [共通点] 複数のSQL文をまとめて取り扱う。
+ [相違点] トランザクションの処理は、All or Nothing（原子性）である。
+          一方、
+          ストアドプロシージャは、仕込まれているSQL文が順次実行され、
+          エラーが発生してもその前の処理は結果として残る。
+
+【登録】
+ [構文]
+  DELIMITER // ←デリミタの指定（既存のままだと;になっている）
+
+  CREATE PROCEDURE プロシージャ名(引数リスト）
+  BEGIN
+    登録したい複数のSQL文
+  END //
+
+ [DELIMITER ;] ←通常の区切り文字に戻す（コマンド操作の場合）
+                 ※phpMyAdminの場合、実行ボタンをクリックすると、
+                   データベースに接続→実行→切断されるので、
+                   この記述は不要！
+
+【実行】
+  ・CALL文で呼び出す。
+    CALL プロシージャ(引数リスト);
+
+【削除】
+ [構文]
+  DROP PROCEDURE プロシージャ名;
+
+【確認】
+ [リスト12-6]登録
+  DELIMITER //
+  CREATE PROCEDURE uriagepack()
+  BEGIN
+    INSERT INTO shohin(idsh,product,price,category)
+    VALUES('ML32004','万年筆D',3000,'万年筆');
+    INSERT INTO uriage(idur,company,charge,state,area)
+    VALUES(2017120001,'シリウス社',6000,'東京都','世田谷区');
+    INSERT INTO uriage(idur,company,charge,state,area)
+    VALUES(2017120002,'ベガ社',12000,'東京都','世田谷区');
+  END //
+
+ [リスト12-7] 実行
+  CALL uriagepack();
+
+ [リスト12-8、12-9]確認
+  SELECT * FROM shohin;
+  SELECT * FROM uriage;
+
+【引数の利用】
+ [仮引数の定義] 仮引数名 データ型←[参考] Excel VBA：仮引数名 AS データ型
+
+【確認】
+ [図12-10] 登録
+  DELIMITER //
+  CREATE PROCEDURE uriagekaishabetsu(kaisha VARCHAR(50))
+  BEGIN
+  	SELECT * FROM uriag WHERE company=kaisha;
+  END //
+
+ [リスト12-11] 実行
+  CALL uriagekaishabetsu('シリウス社');
+
+
+【②ストアドファンクション】
