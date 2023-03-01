@@ -99,3 +99,59 @@ Chapter12 ストアドルーチン
 【削除】
  [構文]
   DROP FUNCTION ファンクション名;
+
+12-2 トリガー
+      ↑
+テーブルに対して更新処理が行われた時、その処理をきっかけにして
+他のテーブルにも更新処理を行う機能
+
+【登録】
+ [構文]
+  DELIMITER //
+  
+  CREATE TRIGGER トリガー名 BEFORE/AFTER 対象の操作
+                            ①タイミング ②イベント
+  ON テーブル名 FOR EACH ROW
+                ③決まり文句
+  BEGIN
+    実行したいSQL文;
+  END //
+
+ [DELIMITER ;]              ←コマンド操作には必要！
+                              phpMyAdmin  では不要！
+
+  →①タイミング：トリガーを発生させるタイミング
+                  イベントの発生前：BEFORE、発生後：AFTER
+  →②イベント  ：更新処理
+                  挿入：INSERT、更新：UPDATE、削除：DELETE
+  →③決まり文句：レコード単位でトリガーを発動させる。指定必須！
+
+【削除】
+  DROP TRIGGER トリガー名;
+
+【確認】
+ [リスト12-23]登録
+  DELIMITER //
+  CREATE TRIGGER jushotrigger AFTER DELETE ON jusho FOR EACH ROW
+  BEGIN
+    UPDATE uriage SET charge = 0 WHERE company = OLD.company;
+  END //
+  
+  ※ UPDATE文では、「OLD」、「NEW」キーワードで指定することで更新される
+     データの変更前後の値を取得することができる。
+     OLD,NEWのそれぞれの参照元は、トリガー条件で変更があったレコードの
+     カラムを参照する。そのためデリーとのNEWや、インサートのOLDは使えない！
+  
+          意味                    INSERT         UPDATE      DELETE
+ ----------------------------------------------------------------------
+ NEW  トリガー実行時の新しい値   〇使える       〇使える    ×使えない
+ OLD  トリガー実行時の古い  値   ×使えない     〇使える    〇使える
+ -----------------------------------------------------------------------
+
+ [リスト12-24] 実行
+  ① DELETE FROM jusho WHERE company = 'ベガ社'; →売上テーブルのベガ社が含まれるレコードに変化が！
+  ② DELETE FROM jusho WHERE state   = '北海道';
+
+ [リスト12-25] 確認
+  ① SELECT * FROM uriage WHERE company = 'ベガ社';
+  ② SELECT * FROM uriage WHERE state   = '北海道';
