@@ -80,3 +80,22 @@ Chapter12 ストアドルーチン
 
 
 【②ストアドファンクション】
+【登録】
+ [構文]
+  DELIMITER //
+  
+  CREATE FUNCTION ファンクション名（引数リスト）RETURNS 戻り値の型
+  BEGIN
+   [DECLARE 変数名 データ型;]※変数宣言
+    登録したいSQL文
+   [SELECT 処理結果 INTO 変数名 FROM ～;] ※変数に処理結果の値を格納
+    RETURN 戻り値;
+  END //
+
+【実行】
+  ・関数を利用できる場所と同じ場所に記述できる。
+   [例] SELECT ファンクション名（引数リスト);
+
+【削除】
+ [構文]
+  DROP FUNCTION ファンクション名;
